@@ -107,3 +107,5 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/datarhei/gosrt => github.com/krsna1729/gosrt v0.0.0-20260812104415-136b9a94a3c2

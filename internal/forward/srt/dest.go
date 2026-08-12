@@ -86,9 +86,35 @@ func (d *Dest) Run(ctx context.Context) error {
 }
 
 func (d *Dest) runInner(ctx context.Context, address string, srtConf srtlib.Config, terminate <-chan struct{}) error {
-	conn, err := srtlib.DialWithContext(ctx, "srt", address, srtConf)
-	if err != nil {
-		return err
+	var (
+		conn srtlib.Conn
+		err  error
+	)
+	if srtConf.GroupType != 0 {
+		g, err := srtlib.NewGroup(srtConf.GroupType, srtConf)
+		if err != nil {
+			return fmt.Errorf("creating group: %w", err)
+		}
+		if err := g.Connect("srt", address, 1); err != nil {
+			g.Close()
+			return fmt.Errorf("connecting link 1: %w", err)
+		}
+		links := srtConf.GroupLinks
+		if len(links) == 0 {
+			links = []string{address}
+		}
+		for i, linkAddr := range links {
+			if err := g.Connect("srt", linkAddr, 1); err != nil {
+				g.Close()
+				return fmt.Errorf("connecting link %d: %w", i+2, err)
+			}
+		}
+		conn = g
+	} else {
+		conn, err = srtlib.DialWithContext(ctx, "srt", address, srtConf)
+		if err != nil {
+			return err
+		}
 	}
 	defer conn.Close()
 
